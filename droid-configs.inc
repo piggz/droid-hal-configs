@@ -75,12 +75,17 @@ Release: %{rel_date}
 %endif
 License:    GPLv2
 Source0:    %{name}-%{version}.tar.bz2
+%if 0%{!?native_build:1}
 BuildRequires: ssu-kickstart-configuration
 BuildRequires: pkgconfig(android-headers)
+%endif
+BuildRequires: repomd-pattern-builder
 BuildRequires: qt5-qttools-kmap2qmap
 BuildRequires: sed
 Requires: sed
+%if 0%{!?native_build:1}
 Requires: droid-hal
+%endif
 %if 0%{?community_adaptation:1}
 # because it provides one ssu feature, do:
 Requires: community-adaptation
@@ -106,6 +111,7 @@ Obsoletes: usb-moded-mtp-mode-android-ffs
 %description
 %{summary}.
 
+%if 0%{!?native_build:1}
 %package    ssu-kickstarts
 Provides:   droid-config-ssu-kickstarts
 Summary:    Kickstarts for Droid HAL
@@ -113,6 +119,7 @@ Provides:   image-configurations
 
 %description ssu-kickstarts
 %{summary}.
+%endif
 
 ################################################################
 %package policy-settings
@@ -142,6 +149,7 @@ Provides:   policy-settings
 %description policy-settings
 %{summary}.
 
+%if 0%{!?native_build:1}
 ################################################################
 %package kickstart-configuration
 Summary:    Kickstart configuration for %{rpm_device}
@@ -153,6 +161,7 @@ Requires:   %{name} = %{version}-%{release}
 
 %description kickstart-configuration
 %{summary}.
+%endif
 
 ################################################################
 %package preinit-plugin
@@ -170,7 +179,11 @@ Requires:   pulseaudio >= 11.1+git4
 Requires:   pulseaudio-modules-nemo-parameters >= 11.1.24
 Requires:   pulseaudio-modules-nemo-stream-restore >= 11.1.24
 Requires:   pulseaudio-modules-nemo-mainvolume >= 11.1.24
+%if 0%{!?native_build:1}
 Requires:   pulseaudio-modules-droid >= 11.1.66
+%else
+Requires:   pulseaudio-module-keepalive
+%endif
 Requires:   pulseaudio-policy-enforcement >= 11.1.35
 Provides:   pulseaudio-settings
 
@@ -535,6 +548,7 @@ if [ -f %{dcd_path}/kickstart/part/%{rpm_device} ]; then
   sed --in-place 's|@LVM_ROOT_PART_SIZE@|%{lvm_root_size}|' %{dcd_path}/kickstart/part/%{rpm_device}
 fi
 
+%if 0%{!?native_build:1}
 # Copy kickstart packs (for %%{rpm_device}-kickstart-configuration)
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ssu/kickstart/pack/%{rpm_device}
 DEST_UPDATER=$RPM_BUILD_ROOT/%{_datadir}/ssu/kickstart/pack/%{rpm_device}/hybris
@@ -547,6 +561,7 @@ fi
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ssu/kickstart/attachment
 cp -f %{dcd_common}/kickstart/attachment_hybris $RPM_BUILD_ROOT/%{_datadir}/ssu/kickstart/attachment/%{rpm_device}
 cp -f %{dcd_path}/kickstart/attachment_hybris $RPM_BUILD_ROOT/%{_datadir}/ssu/kickstart/attachment/%{rpm_device} || true
+%endif
 
 # Override the common configs with device specifics if those exist
 if [ -e %{dcd_path}/kickstart ]; then
@@ -582,6 +597,7 @@ fi
   fi
 %endif
 
+%if 0%{!?native_build:1}
 # build variant ks files if name file exist
 %if 0%{?variant_name_list:1}
   variants=variant_name.list
@@ -595,6 +611,7 @@ fi
 %else
   %gen_ks %{rpm_device}
 %endif
+%endif
 
 # Preinit plugins
 ln -s /bin/false $RPM_BUILD_ROOT%{_prefix}/lib/startup/preinit/is_total_erase_supported
@@ -606,11 +623,13 @@ mkdir -p $RPM_BUILD_ROOT/%{_datadir}/qt5/keymaps
 
 clean_files() { sed 's_^./_/_'; }
 
+%if 0%{!?native_build:1}
 # Create the various '%%files' files
 (cd $RPM_BUILD_ROOT; ls .%{_datadir}/kickstarts/*.ks) | clean_files > tmp/ssu-kickstarts.files
 
 (cd $RPM_BUILD_ROOT; find .%{_datadir}/ssu/kickstart/ -type f) | clean_files > tmp/kickstart-configuration.files
 (cd $RPM_BUILD_ROOT; find .%{_datadir}/ssu/kickstart/ -type l) | clean_files >> tmp/kickstart-configuration.files
+%endif
 
 # Append extra_files to the end of droid-config.files.
 if [ -e extra-files.files ]; then
@@ -655,15 +674,19 @@ fi
 %endif
 %{_datadir}/qt5/keymaps/droid.qmap
 
+%if 0%{!?native_build:1}
 %files ssu-kickstarts
 %defattr(-,root,root,-)
 %{_datadir}/kickstarts/*.ks
+%endif
 
 %files policy-settings -f tmp/policy-settings.files
 %defattr(644,root,root,-)
 
+%if 0%{!?native_build:1}
 %files kickstart-configuration -f tmp/kickstart-configuration.files
 %defattr(644,root,root-)
+%endif
 
 %files preinit-plugin
 %defattr(-,root,root,-)
